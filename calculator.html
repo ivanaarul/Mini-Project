@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Calculator</title>
+<title>Smart Calculator</title>
 
 <style>
 body {
@@ -10,50 +10,68 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background: #222;
     font-family: Arial, sans-serif;
+    background: #121212;
+    color: white;
 }
 
 .calculator {
-    background: #333;
-    padding: 20px;
-    border-radius: 10px;
-    width: 260px;
+    background: #1e1e2f;
+    padding: 15px;
+    border-radius: 15px;
+    width: 320px;
 }
 
 #display {
     width: 100%;
-    height: 50px;
-    margin-bottom: 10px;
+    height: 60px;
+    font-size: 22px;
     text-align: right;
-    font-size: 20px;
-    padding: 5px;
     border: none;
-    border-radius: 5px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #2c2c3e;
+    color: white;
 }
 
 .buttons {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
 }
 
 button {
-    padding: 15px;
-    font-size: 18px;
+    padding: 12px;
+    font-size: 16px;
     border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    background: #555;
+    border-radius: 8px;
+    background: #3a3a5a;
     color: white;
+    cursor: pointer;
 }
 
 button:hover {
-    background: #777;
+    background: #57578a;
 }
 
-.zero {
-    grid-column: span 2;
+.operator { background: orange; }
+.equal { background: #00c9a7; }
+.clear { background: red; }
+
+.toggle {
+    margin-bottom: 10px;
+    text-align: right;
+}
+
+.history {
+    max-height: 100px;
+    overflow-y: auto;
+    font-size: 14px;
+    margin-top: 10px;
+    background: #2c2c3e;
+    padding: 5px;
+    border-radius: 8px;
 }
 </style>
 
@@ -61,56 +79,105 @@ button:hover {
 <body>
 
 <div class="calculator">
-    <input type="text" id="display" disabled>
 
-    <div class="buttons">
-        <button onclick="clearDisplay()">C</button>
-        <button onclick="deleteLast()">DEL</button>
-        <button onclick="appendValue('/')">/</button>
-        <button onclick="appendValue('*')">*</button>
+<div class="toggle">
+    <button onclick="toggleTheme()">🌗</button>
+</div>
 
-        <button onclick="appendValue('7')">7</button>
-        <button onclick="appendValue('8')">8</button>
-        <button onclick="appendValue('9')">9</button>
-        <button onclick="appendValue('-')">-</button>
+<input type="text" id="display" readonly>
 
-        <button onclick="appendValue('4')">4</button>
-        <button onclick="appendValue('5')">5</button>
-        <button onclick="appendValue('6')">6</button>
-        <button onclick="appendValue('+')">+</button>
+<div class="buttons">
+    <button onclick="append('sin(')">sin</button>
+    <button onclick="append('cos(')">cos</button>
+    <button onclick="append('tan(')">tan</button>
+    <button onclick="append('Math.log10(')">log</button>
+    <button onclick="append('Math.sqrt(')">√</button>
 
-        <button onclick="appendValue('1')">1</button>
-        <button onclick="appendValue('2')">2</button>
-        <button onclick="appendValue('3')">3</button>
-        <button onclick="calculate()">=</button>
+    <button class="clear" onclick="clearDisplay()">C</button>
+    <button onclick="backspace()">⌫</button>
+    <button class="operator" onclick="append('/')">÷</button>
+    <button class="operator" onclick="append('*')">×</button>
+    <button onclick="append('(')">(</button>
 
-        <button onclick="appendValue('0')" class="zero">0</button>
-        <button onclick="appendValue('.')">.</button>
-    </div>
+    <button onclick="append('7')">7</button>
+    <button onclick="append('8')">8</button>
+    <button onclick="append('9')">9</button>
+    <button class="operator" onclick="append('-')">−</button>
+    <button onclick="append(')')">)</button>
+
+    <button onclick="append('4')">4</button>
+    <button onclick="append('5')">5</button>
+    <button onclick="append('6')">6</button>
+    <button class="operator" onclick="append('+')">+</button>
+    <button class="equal" onclick="calculate()">=</button>
+
+    <button onclick="append('1')">1</button>
+    <button onclick="append('2')">2</button>
+    <button onclick="append('3')">3</button>
+    <button onclick="append('0')">0</button>
+    <button onclick="append('.')">.</button>
+</div>
+
+<div class="history" id="history"></div>
+
 </div>
 
 <script>
-function appendValue(value) {
-    document.getElementById("display").value += value;
+let display = document.getElementById("display");
+let historyBox = document.getElementById("history");
+
+function append(value) {
+    display.value += value;
 }
 
 function clearDisplay() {
-    document.getElementById("display").value = "";
+    display.value = "";
 }
 
-function deleteLast() {
-    let display = document.getElementById("display");
+function backspace() {
     display.value = display.value.slice(0, -1);
 }
 
+// scientific safe calculation
 function calculate() {
-    let display = document.getElementById("display");
     try {
-        display.value = eval(display.value);
+        let expression = display.value
+            .replace(/sin/g, "Math.sin")
+            .replace(/cos/g, "Math.cos")
+            .replace(/tan/g, "Math.tan");
+
+        let result = Function('"use strict"; return (' + expression + ')')();
+        
+        historyBox.innerHTML += display.value + " = " + result + "<br>";
+        display.value = result;
     } catch {
         display.value = "Error";
     }
 }
+
+// theme toggle
+function toggleTheme() {
+    if (document.body.style.background === "white") {
+        document.body.style.background = "#121212";
+        document.body.style.color = "white";
+    } else {
+        document.body.style.background = "white";
+        document.body.style.color = "black";
+    }
+}
+
+// keyboard support
+document.addEventListener("keydown", function(e) {
+    if (!isNaN(e.key) || "+-*/().".includes(e.key)) {
+        append(e.key);
+    } else if (e.key === "Enter") {
+        calculate();
+    } else if (e.key === "Backspace") {
+        backspace();
+    } else if (e.key === "Escape") {
+        clearDisplay();
+    }
+});
 </script>
 
 </body>
